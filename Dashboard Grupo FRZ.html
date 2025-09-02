@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login • Dashboards Power BI</title>
+  <style>
+    :root { 
+      color-scheme: dark;
+      --primary: #d9b300;
+      --primary-hover: #c4a000;
+      --bg-dark: #0a0a0a;
+      --card-bg: rgba(24,24,27,.95);
+      --border: #2a2a2a;
+      --text: #ffffff;
+      --text-muted: #aaaaaa;
+      --error: #ff6b6b;
+      --success: #51cf66;
+      --space: clamp(10px, 2vw, 16px);
+      --radius: 16px;
+      --max-card: 1040px;
+      --shadow: 0 20px 40px rgba(0,0,0,.6);
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
+    }
+
+    * { box-sizing: border-box; }
+
+    body { 
+      margin: 0; 
+      background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+      color: var(--text); 
+      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Ubuntu, sans-serif;
+      min-height: 100vh;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    .wrap-center { 
+      min-height: 100vh; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      padding: var(--space);
+      background: radial-gradient(circle at 50% 50%, rgba(217,179,0,.08) 0%, transparent 60%);
+    }
+
+    .card { 
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: clamp(16px, 3vw, 28px);
+      width: 100%;
+      max-width: var(--max-card);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+    .card.narrow{ max-width: 480px; }
+    .card.admin-grid{ overflow: visible; }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), #ffd700, var(--primary));
+    }
+
+    h1 { 
+      margin: 0 0 16px; 
+      font-size: clamp(22px, 2.5vw, 28px); 
+      font-weight: 700;
+      text-align: center;
+      background: linear-gradient(135deg, var(--primary), #ffd700);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    h2 { margin: 0 0 8px; font-size: clamp(18px, 2.2vw, 22px); font-weight: 700; }
+    h3 { margin: 0 0 8px; font-size: clamp(16px, 2vw, 18px); }
+
+    .form-group { margin-bottom: 12px; position: relative; }
+    label { display: block; font-size: 13px; margin-bottom: 6px; color: var(--text-muted); font-weight: 500; }
+
+    input, select, textarea { 
+      width: 100%; 
+      padding: 12px 14px; 
+      border-radius: 12px; 
+      border: 2px solid transparent;
+      background: rgba(17,17,17,.9);
+      color: var(--text);
+      outline: none;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+    input:focus, select:focus, textarea:focus { 
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(217,179,0,.25);
+      transform: translateY(-1px);
+    }
+
+    .input-group { position: relative; }
+    .toggle-pwd { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: 4px; transition: color 0.2s; }
+    .toggle-pwd:hover { color: var(--primary); }
+
+    .btn { 
+      background: linear-gradient(135deg, var(--primary), #ffd700);
+      color: #000; font-weight: 600;
+      padding: 12px 16px; border: none; border-radius: 10px;
+      cursor: pointer; font-size: 14px;
+      transition: transform .15s ease, box-shadow .15s ease;
+      position: relative; overflow: hidden;
+      text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(217,179,0,.4); }
+    .btn:active { transform: translateY(0); }
+    .btn-full { width: 100%; }
+    .btn-secondary { background: rgba(255,255,255,.08); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: rgba(255,255,255,.12); box-shadow: 0 8px 25px rgba(255,255,255,.06); }
+    .btn-danger{ background: linear-gradient(135deg, #ff6b6b, #ff9b9b); color:#000 }
+    .btn-ghost{ background: rgba(255,255,255,.06); color: var(--text); border: 1px solid var(--border); }
+
+    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .muted { color: var(--text-muted); font-size: 13px; line-height: 1.4; }
+
+    .error { color: var(--error); font-size: 13px; margin-top: 8px; padding: 8px 12px; background: rgba(255,107,107,.1); border-radius: 8px; border-left: 3px solid var(--error); }
+    .success { color: var(--success); font-size: 13px; margin-top: 8px; padding: 8px 12px; background: rgba(81,207,102,.1); border-radius: 8px; border-left: 3px solid var(--success); }
+
+    .topbar { position: sticky; top: 0; z-index: 10; display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; padding: 12px var(--space); background: rgba(10,10,10,.95); border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); }
+    .group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .group:has(select) { justify-content: center; }
+
+    .content { height: calc(100vh - 64px); position: relative; padding: 0 var(--space); }
+    iframe { width: 100%; height: 100%; border: 0; background: #121212; border-radius: 8px; }
+    .hide { display: none !important; }
+    .loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--text-muted); font-size: 14px; }
+    .spinner { width: 20px; height: 20px; border: 2px solid transparent; border-top: 2px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; margin-right: 8px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* ====== Tabela ====== */
+    .table-wrap{ width:100%; overflow-x:auto; -webkit-overflow-scrolling: touch; }
+    table{ width:100%; border-collapse: collapse; min-width: 720px; }
+    th, td{ text-align:left; padding:10px; border-bottom:1px solid var(--border); font-size: 13px; vertical-align: top; }
+    th{ color:var(--text-muted); font-weight:600; position: sticky; top: 0; background: rgba(24,24,27,.98); backdrop-filter: blur(6px); }
+    tr:hover td{ background: rgba(255,255,255,.03); }
+    .tag{ display:inline-block; padding:2px 8px; border:1px solid var(--border); border-radius:999px; font-size:12px; margin-right:6px; }
+    .dash-badge{ display:inline-block; padding:2px 8px; border:1px solid rgba(217,179,0,.35); color:#ffd700; border-radius:999px; font-size:12px; margin:2px 6px 2px 0 }
+    .col-actions{ white-space: nowrap; }
+
+    /* ====== Layout Admin ====== */
+    .admin-grid { display: grid; grid-template-columns: minmax(460px,1fr) minmax(320px,420px); gap: 16px; align-items: start; }
+    .panel { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: rgba(255,255,255,.03); }
+    .panel.sticky { position: sticky; top: 12px; z-index: 0; }
+
+    /* ====== Responsividade ====== */
+    @media (max-width: 1100px) {
+      .admin-grid { grid-template-columns: 1fr; }
+      .panel.sticky { position: relative; top: 0; }
+      table { min-width: 660px; }
+      .content { height: calc(100vh - 100px); }
+    }
+    @media (max-width: 900px) {
+      .topbar { grid-template-columns: 1fr; gap: 8px; text-align: center; }
+      .group { justify-content: center; }
+      .content { height: calc(100vh - 156px); }
+    }
+    @media (max-width: 640px) {
+      .card { border-radius: 14px; }
+      .btn, input, select { font-size: 15px; }
+      table { min-width: 560px; }
+    }
+    @media (max-width: 480px) {
+      .wrap-center { padding: 10px; }
+      .card { padding: 14px; }
+      .btn { width: 100%; }
+      .group > * { flex: 1 1 auto; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Screen -->
+  <section id="screen-login" class="wrap-center">
+    <form id="form-login" class="card narrow" autocomplete="off">
+      <h1>🔐 Acesso aos Dashboards</h1>
+      <div class="form-group">
+        <label for="email">📧 E-mail</label>
+        <input id="email" name="email" type="email" required placeholder="voce@empresa.com">
+      </div>
+      <div class="form-group">
+        <label for="password">🔒 Senha</label>
+        <div class="input-group">
+          <input id="password" name="password" type="password" required placeholder="••••••••">
+          <button type="button" class="toggle-pwd" id="togglePwd" title="Mostrar/ocultar senha">👁️</button>
+        </div>
+        <div class="muted">Mínimo 8 caracteres, com maiúscula, minúscula, número e símbolo.</div>
+      </div>
+      <div id="message-login" aria-live="polite"></div>
+      <button type="submit" class="btn btn-full">
+        <span id="login-text">Entrar</span>
+        <span id="login-spinner" class="hide"><span class="spinner"></span>Verificando...</span>
+      </button>
+    </form>
+  </section>
+
+  <!-- Dashboard Screen -->
+  <section id="screen-dash" class="hide">
+    <div class="topbar">
+      <div class="group">
+        <button class="btn btn-secondary" id="btnBack">🏠 Início</button>
+        <button class="btn btn-secondary" id="btnReload">🔄 Recarregar</button>
+        <button class="btn btn-ghost hide" id="btnAdmin">🛡️ Admin</button>
+      </div>
+      <div class="group">
+        <label for="selDash" class="muted">Dashboard:</label>
+        <select id="selDash"><option value="">Carregando...</option></select>
+      </div>
+      <div class="group">
+        <span class="muted" id="userInfo"></span>
+        <!-- Botão dourado dinâmico -->
+        <a id="btnRequest" class="btn" target="_blank" rel="noopener" style="margin-left:8px">⚡ Solicitar Atualização</a>
+      </div>
+    </div>
+    <div class="content">
+      <div id="loading-indicator" class="loading hide"><span class="spinner"></span> Carregando dashboard...</div>
+      <iframe id="reportFrame" title="Power BI Dashboard"
+        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"
+        allow="fullscreen" referrerpolicy="no-referrer"></iframe>
+    </div>
+  </section>
+
+  <!-- Admin Screen -->
+  <section id="screen-admin" class="wrap-center hide">
+    <div class="card admin-grid">
+      <div class="row" style="justify-content:space-between;align-items:center; margin-bottom:8px">
+        <h2>🛡️ Administração de Usuários</h2>
+        <div class="row">
+          <button class="btn btn-secondary" id="btnAdminBack" type="button">⬅️ Voltar</button>
+          <button class="btn" id="btnExportUsers" type="button">⬇️ Exportar</button>
+          <label class="btn btn-ghost" for="fileImport">⬆️ Importar</label>
+          <input id="fileImport" type="file" accept="application/json" class="hide" />
+        </div>
+      </div>
+
+      <!-- Topo: criar/editar (100% largura no grid) -->
+      <form id="form-user" style="grid-column: 1 / -1; margin-bottom: 12px">
+        <h3>➕ Criar / ✏️ Editar Usuário</h3>
+        <div class="row">
+          <div class="form-group" style="flex:2; min-width:220px">
+            <label for="uEmail">E-mail</label>
+            <input id="uEmail" type="email" required placeholder="nome@empresa.com">
+          </div>
+          <div class="form-group" style="flex:1; min-width:160px">
+            <label for="uName">Nome</label>
+            <input id="uName" type="text" required placeholder="Nome do usuário">
+          </div>
+          <div class="form-group" style="flex:1; min-width:150px">
+            <label for="uRole">Papel</label>
+            <select id="uRole">
+              <option value="user">user</option>
+              <option value="manager">manager</option>
+              <option value="admin">admin</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1; min-width:180px">
+            <label for="uPassword">Senha</label>
+            <input id="uPassword" type="password" placeholder="Defina ou deixe em branco">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Dashboards Permitidos</label>
+          <div id="dashChecks" class="row"></div>
+        </div>
+        <div class="row">
+          <button class="btn" type="submit" id="btnSaveUser">Salvar</button>
+          <button class="btn btn-secondary" type="button" id="btnClearUser">Limpar</button>
+          <button class="btn btn-danger hide" type="button" id="btnDeleteUser">Excluir</button>
+        </div>
+        <div id="adminMsg" style="margin-top:8px"></div>
+      </form>
+
+      <!-- Coluna esquerda: Usuários -->
+      <div>
+        <h3>👥 Usuários</h3>
+        <div class="table-wrap">
+          <table id="tblUsers">
+            <thead>
+              <tr>
+                <th style="min-width:220px">E-mail</th>
+                <th style="min-width:200px">Usuário & Acessos</th>
+                <th style="min-width:90px">Papel</th>
+                <th style="min-width:260px">Dashboards</th>
+                <th class="col-actions" style="min-width:220px">Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Coluna direita: Painel de acessos -->
+      <div class="panel sticky">
+        <h3>📜 Acessos do Usuário</h3>
+        <div class="muted" id="accessHint">Selecione "Ver" na lista para detalhar os acessos.</div>
+        <div id="accessDetails" class="hide">
+          <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:8px">
+            <div>
+              <div id="accUserEmail" style="font-weight:600"></div>
+              <div id="accUserSummary" class="muted"></div>
+            </div>
+            <button class="btn btn-ghost" id="btnClearLogs" type="button">🧹 Limpar logs</button>
+          </div>
+          <div class="table-wrap">
+            <table id="tblAccesses">
+              <thead>
+                <tr>
+                  <th style="min-width:160px">Login</th>
+                  <th style="min-width:160px">Logout</th>
+                  <th style="min-width:110px">Duração</th>
+                  <th style="min-width:180px">Dashboards usados</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Setup inicial (quando ainda não há usuários) -->
+  <section id="screen-setup" class="wrap-center hide">
+    <form id="form-setup" class="card narrow" autocomplete="off">
+      <h2>⚙️ Configuração Inicial</h2>
+      <p class="muted">Não há usuários cadastrados. Crie o primeiro <strong>administrador</strong> para começar.</p>
+      <div class="form-group">
+        <label for="sEmail">E-mail do admin</label>
+        <input id="sEmail" type="email" required placeholder="admin@empresa.com">
+      </div>
+      <div class="form-group">
+        <label for="sNome">Nome</label>
+        <input id="sNome" type="text" required placeholder="Administrador">
+      </div>
+      <div class="form-group">
+        <label for="sSenha">Senha</label>
+        <div class="input-group">
+          <input id="sSenha" type="password" required placeholder="••••••••">
+          <button type="button" class="toggle-pwd" id="togglePwdSetup" title="Mostrar/ocultar senha">👁️</button>
+        </div>
+      </div>
+      <div id="setupMsg"></div>
+      <button class="btn btn-full" type="submit">Criar Admin</button>
+    </form>
+  </section>
+
+<script>
+/********************** CONFIG *************************/
+const CONFIG = {
+  refreshMinutes: 60,          // 🔁 Refresh automático
+  statusRefreshSeconds: 60,    // ⏱️ Atualiza "Última atualização"
+  dashboards: [
+    { id: 'default',   name: '📊 Dashboard Principal',
+      embedUrl: 'https://app.powerbi.com/view?r=eyJrIjoiEXEMPLO-EMBED-URL-AQUI',
+      requestUrl: 'mailto:bi@empresa.com?subject=Atualizar%20Dashboard%20Principal&body=Por%20favor%2C%20atualizar%20o%20Dashboard%20Principal.',
+      description:'KPIs gerais' },
+
+    { id: 'Administrativo', name: '💰 Administrativo',
+      embedUrl: 'https://app.powerbi.com/view?r=eyJrIjoiZjBhMDQ4MDAtNmJjMy00Y2MyLTlmOTgtODVmY2ExOTZjYzJhIiwidCI6IjdlNDIzZGRiLWFiMDktNDVmMS05ZjgyLTkxYzhjODVhMzNkMCJ9',
+      requestUrl: 'https://forms.office.com/Pages/ResponsePage.aspx?id=2z1Cfgmr8UWfgpHIyFoz0GyNBC1SyIdIlvErAM7rjJ1UQVBaUkU5Sk44QkpVSVRJUjZGTUFCWEIwMy4u',
+      description:'Financeiro e orçado' },
+
+    { id: 'comercial', name: '📈 Comercial',
+      embedUrl: 'https://app.powerbi.com/view?r=eyJrIjoiZWI4NjA0ZjEtYjhlOS00NjRlLThhNzMtMWE5YThkNTgxODZlIiwidCI6IjdlNDIzZGRiLWFiMDktNDVmMS05ZjgyLTkxYzhjODVhMzNkMCJ9',
+      requestUrl: 'https://forms.office.com/Pages/ResponsePage.aspx?id=2z1Cfgmr8UWfgpHIyFoz0GyNBC1SyIdIlvErAM7rjJ1UNEUyV1FLRjg1Sk1ZUFNIUkpLUE4zNzhaNC4u',
+      description:'Vendas e performance' },
+
+    { id: 'Pedagogico', name: '👥 Pedagógico',
+      embedUrl: 'https://app.powerbi.com/view?r=eyJrIjoiOTExOTVmMmMtZWFiOC00OWMxLWFkOTMtYTAyMDZhOTdmNTM1IiwidCI6IjdlNDIzZGRiLWFiMDktNDVmMS05ZjgyLTkxYzhjODVhMzNkMCJ9',
+      requestUrl: 'mailto:bi@empresa.com?subject=Atualizar%20Dashboard%20Pedagogico&body=Por%20favor%2C%20atualizar%20o%20Dashboard%20Pedag%C3%B3gico.',
+      description:'Indicadores de RH' }
+  ]
+};
+
+/********************** ESTADO *************************/
+let session = { user: null, loginTime: null, currentDashboard: null, currentLogId: null };
+let statusTimer = null; // "Última atualização"
+
+/********************** VALIDAÇÕES *************************/
+const strongPwd = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/********************** PERSISTÊNCIA *************************/
+const STORAGE_USERS = 'pbi_users_v1';
+const STORAGE_LOGS  = 'pbi_access_logs_v1';
+
+function loadUsers(){ try{ const raw=localStorage.getItem(STORAGE_USERS); return raw?JSON.parse(raw):[]; }catch{ return []; } }
+function saveUsers(v){ localStorage.setItem(STORAGE_USERS, JSON.stringify(v)); }
+function loadLogs(){ try{ const raw=localStorage.getItem(STORAGE_LOGS); return raw?JSON.parse(raw):[]; }catch{ return []; } }
+function saveLogs(v){ localStorage.setItem(STORAGE_LOGS, JSON.stringify(v)); }
+
+async function sha256(text){ const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)); return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
+
+/********************** LOGS *************************/
+function startSessionLog(email){ const logs=loadLogs(); const id=`${Date.now()}_${Math.random().toString(36).slice(2,8)}`; const now=new Date().toISOString(); logs.push({ id, email, loginAt: now, logoutAt: null, reason: null, actions: [] }); saveLogs(logs); session.currentLogId=id; }
+function appendLogAction(type, payload){ if(!session.currentLogId) return; const logs=loadLogs(); const i=logs.findIndex(l=>l.id===session.currentLogId); if(i<0) return; logs[i].actions.push({ type, at:new Date().toISOString(), ...payload }); saveLogs(logs); }
+function closeSessionLog(reason='logout'){ if(!session.currentLogId) return; const logs=loadLogs(); const i=logs.findIndex(l=>l.id===session.currentLogId); if(i<0) return; if(!logs[i].logoutAt){ logs[i].logoutAt=new Date().toISOString(); logs[i].reason=reason; saveLogs(logs); } session.currentLogId=null; }
+
+/********************** AUTH *************************/
+async function authenticateUser(email,password){ await new Promise(r=>setTimeout(r,250)); const users=loadUsers(); const hash=await sha256(password); return users.find(u=>u.email.toLowerCase()===email.toLowerCase() && u.passwordHash===hash) || null; }
+async function createUser({email, password, name, role='user', allowedDashIds=['default']}){ const users=loadUsers(); if(users.some(u=>u.email.toLowerCase()===email.toLowerCase())) throw new Error('Já existe um usuário com este e-mail.'); if(!emailRegex.test(email)) throw new Error('E-mail inválido.'); if(!password || !strongPwd.test(password)) throw new Error('Senha fraca.'); const passwordHash=await sha256(password); const u={ email, name, role, allowedDashIds, passwordHash }; users.push(u); saveUsers(users); return u; }
+async function updateUser(email,{name, role, allowedDashIds, password}){ const users=loadUsers(); const i=users.findIndex(u=>u.email.toLowerCase()===email.toLowerCase()); if(i<0) throw new Error('Usuário não encontrado.'); if(name) users[i].name=name; if(role) users[i].role=role; if(allowedDashIds) users[i].allowedDashIds=allowedDashIds; if(password){ users[i].passwordHash=await sha256(password); } saveUsers(users); return users[i]; }
+function deleteUser(email){ const users=loadUsers().filter(u=>u.email.toLowerCase()!==email.toLowerCase()); saveUsers(users); }
+
+/********************** ELEMENTOS *************************/
+const $ = id => document.getElementById(id);
+const el = {
+  // telas
+  scrLogin: $('screen-login'), scrDash: $('screen-dash'), scrAdmin: $('screen-admin'), scrSetup: $('screen-setup'),
+  // login
+  formLogin: $('form-login'), messageLogin: $('message-login'), togglePwd: $('togglePwd'), inputPwd: $('password'), inputEmail: $('email'), loginText: $('login-text'), loginSpinner: $('login-spinner'),
+  // dash
+  selDash: $('selDash'), reportFrame: $('reportFrame'), btnBack: $('btnBack'), btnReload: $('btnReload'), btnAdmin: $('btnAdmin'), userInfo: $('userInfo'), loadingIndicator: $('loading-indicator'), btnRequest: $('btnRequest'),
+  // admin topo
+  btnAdminBack: $('btnAdminBack'), btnExportUsers: $('btnExportUsers'), fileImport: $('fileImport'),
+  // admin form
+  formUser: $('form-user'), uEmail: $('uEmail'), uName: $('uName'), uRole: $('uRole'), uPassword: $('uPassword'), dashChecks: $('dashChecks'), btnSaveUser: $('btnSaveUser'), btnClearUser: $('btnClearUser'), btnDeleteUser: $('btnDeleteUser'), adminMsg: $('adminMsg'),
+  // admin lista/painel
+  tblUsersBody: document.querySelector('#tblUsers tbody'), accessHint: $('accessHint'), accessDetails: $('accessDetails'), accUserEmail: $('accUserEmail'), accUserSummary: $('accUserSummary'), tblAccessesBody: document.querySelector('#tblAccesses tbody'), btnClearLogs: $('btnClearLogs'),
+  // setup
+  formSetup: $('form-setup'), sEmail: $('sEmail'), sNome: $('sNome'), sSenha: $('sSenha'), togglePwdSetup: $('togglePwdSetup'), setupMsg: $('setupMsg')
+};
+
+/********************** UTIL *************************/
+function showMessage(message, type='error'){ el.messageLogin.innerHTML = `<div class="${type}">${message}</div>`; setTimeout(()=> el.messageLogin.innerHTML='', 5000); }
+function setLoading(isLoading){ el.loginText.classList.toggle('hide', isLoading); el.loginSpinner.classList.toggle('hide', !isLoading); }
+function formatTime(date){ return date.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}); }
+function fmtDateTime(s){ return new Date(s).toLocaleString('pt-BR', {dateStyle:'short', timeStyle:'short'}); }
+function fmtDuration(ms){ const sec=Math.max(0,Math.floor(ms/1000)); const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60; return `${h}h ${m}m ${s}s`; }
+
+/********************** DASH BUTTON DINÂMICO *************************/
+function getCurrentDash(){
+  const id = el.selDash.value || 'default';
+  return CONFIG.dashboards.find(d => d.id === id) || CONFIG.dashboards[0];
+}
+function updateRequestButton(){
+  const dash = getCurrentDash();
+  const url = dash.requestUrl;
+  const btn = el.btnRequest;
+  if (url && url.trim()) {
+    btn.href = url;
+    btn.classList.remove('hide');
+    btn.setAttribute('title', `Solicitar atualização de: ${dash.name}`);
+  } else {
+    btn.href = '#';
+    btn.classList.add('hide');
+    btn.removeAttribute('title');
+  }
+}
+
+/********************** NAVEGAÇÃO *************************/
+function showLogin(){ el.scrAdmin.classList.add('hide'); el.scrDash.classList.add('hide'); el.scrSetup.classList.add('hide'); el.scrLogin.classList.remove('hide'); el.formLogin.reset(); el.inputEmail.focus(); stopStatusTimer(); }
+function showDash(){ el.scrLogin.classList.add('hide'); el.scrAdmin.classList.add('hide'); el.scrSetup.classList.add('hide'); el.scrDash.classList.remove('hide'); buildDashList(); updateUserInfo(); loadDashboard(el.selDash.value || 'default'); startStatusTimer(); }
+function showAdmin(){ if(!session.user || session.user.role!=='admin') return; el.scrLogin.classList.add('hide'); el.scrDash.classList.add('hide'); el.scrSetup.classList.add('hide'); el.scrAdmin.classList.remove('hide'); renderAdmin(); stopStatusTimer(); }
+function showSetup(){ el.scrLogin.classList.add('hide'); el.scrDash.classList.add('hide'); el.scrAdmin.classList.add('hide'); el.scrSetup.classList.remove('hide'); el.sEmail.focus(); }
+
+function updateUserInfo(){ if(session.user){ const agora=new Date(); const datahora=agora.toLocaleString('pt-BR',{dateStyle:'short', timeStyle:'short'}); el.userInfo.innerHTML = `👋 ${session.user.name} • Login: ${formatTime(session.loginTime)}<br><span class="muted">⏱️ Última atualização: ${datahora}</span>`; el.btnAdmin.classList.toggle('hide', session.user.role!=='admin'); } }
+function startStatusTimer(){ stopStatusTimer(); statusTimer=setInterval(updateUserInfo, (CONFIG.statusRefreshSeconds||60)*1000); }
+function stopStatusTimer(){ if(statusTimer){ clearInterval(statusTimer); statusTimer=null; } }
+
+function buildDashList(){
+  el.selDash.innerHTML='';
+  const allowed=session.user?.allowedDashIds||[];
+  const list=CONFIG.dashboards.filter(d=>allowed.includes(d.id));
+  const dashes=list.length?list:CONFIG.dashboards.filter(d=>d.id==='default');
+  dashes.forEach(d=>{
+    const o=document.createElement('option');
+    o.value=d.id; o.textContent=d.name; o.title=d.description||'';
+    el.selDash.appendChild(o);
+  });
+  el.selDash.value=dashes[0]?.id||'default';
+  updateRequestButton(); // atualiza link do botão dourado
+}
+function loadDashboard(id){
+  if(session.user && !session.user.allowedDashIds?.includes(id)){
+    showMessage('Você não tem acesso a este dashboard.','error'); return;
+  }
+  const dash=CONFIG.dashboards.find(d=>d.id===id)||CONFIG.dashboards[0];
+  el.loadingIndicator.classList.remove('hide'); el.reportFrame.style.opacity='0.5';
+  setTimeout(()=>{
+    el.reportFrame.src=dash.embedUrl;
+    session.currentDashboard=dash;
+    updateRequestButton(); // ajusta o link conforme o dash carregado
+    appendLogAction('view',{dashId:dash.id});
+    el.reportFrame.onload=()=>{
+      el.loadingIndicator.classList.add('hide'); el.reportFrame.style.opacity='1';
+    };
+  },200);
+}
+
+/********************** REFRESH AUTOMÁTICO (60min) *************************/
+(function autoRefresh(){ const ms=(CONFIG.refreshMinutes||60)*60*1000; setTimeout(()=>{ closeSessionLog('auto_refresh'); location.reload(); }, ms); })();
+
+/********************** EVENTOS *************************/
+['togglePwd','togglePwdSetup'].forEach(id=>{ const btn=$(id); if(!btn) return; btn.addEventListener('click',()=>{ const input = id==='togglePwd'? el.inputPwd : el.sSenha; const isPwd = input.type==='password'; input.type = isPwd?'text':'password'; btn.textContent = isPwd?'🙈':'👁️'; btn.title = isPwd ? 'Ocultar senha' : 'Mostrar senha'; }); });
+
+el.formLogin.addEventListener('submit', async (e)=>{ e.preventDefault(); const email=el.inputEmail.value.trim(); const password=el.inputPwd.value; if(!emailRegex.test(email)) return showMessage('Por favor, insira um e-mail válido.','error'); if(!strongPwd.test(password)) return showMessage('Senha deve ter 8+ caracteres, com maiúscula, minúscula, número e símbolo.','error'); setLoading(true); try{ const user=await authenticateUser(email,password); if(user){ session.user=user; session.loginTime=new Date(); startSessionLog(user.email); showMessage('Login realizado com sucesso! 🎉','success'); setTimeout(showDash,500); } else showMessage('E-mail ou senha incorretos.','error'); } catch{ showMessage('Erro ao fazer login.','error'); } finally{ setLoading(false); } });
+
+el.btnBack.addEventListener('click', ()=>{ if(confirm('Deseja realmente sair do sistema?')) doLogout(); });
+el.btnReload.addEventListener('click', ()=>{ if(session.currentDashboard) loadDashboard(session.currentDashboard.id); });
+el.btnAdmin.addEventListener('click', ()=> showAdmin());
+
+el.selDash.addEventListener('change', ()=>{
+  const id=el.selDash.value;
+  if(id!==session.currentDashboard?.id) loadDashboard(id);
+  updateRequestButton(); // atualiza link ao trocar seleção
+});
+
+function doLogout(){ closeSessionLog('logout'); session.user=null; session.loginTime=null; session.currentDashboard=null; session.currentLogId=null; el.reportFrame.src='about:blank'; el.messageLogin.innerHTML=''; stopStatusTimer(); showLogin(); }
+window.addEventListener('beforeunload', ()=>{ closeSessionLog('unload'); });
+
+/********************** ADMIN UI *************************/
+function renderDashChecks(selected=['default']){ el.dashChecks.innerHTML=''; CONFIG.dashboards.forEach(d=>{ const id=`dash_${d.id}`; const wrap=document.createElement('label'); wrap.className='tag'; wrap.style.cursor='pointer'; wrap.title=d.description||''; wrap.innerHTML=`<input type="checkbox" id="${id}" value="${d.id}" ${selected.includes(d.id)?'checked':''} style="accent-color:#d9b300; margin-right:6px"> ${d.name}`; el.dashChecks.appendChild(wrap); }); }
+function getSelectedDashIds(){ return Array.from(el.dashChecks.querySelectorAll('input[type="checkbox"]:checked')).map(i=>i.value); }
+function accessCount(email){ return loadLogs().filter(l=>l.email.toLowerCase()===email.toLowerCase()).length; }
+function renderUserTable(){ const users=loadUsers(); el.tblUsersBody.innerHTML=''; for(const u of users){ const tr=document.createElement('tr'); const roleTag=`<span class="tag">${u.role||'user'}</span>`; const dashes=(u.allowedDashIds||['default']).map(id=>{ const dash=CONFIG.dashboards.find(d=>d.id===id); return `<span class="dash-badge">${dash?dash.name:id}</span>`; }).join(''); const accesses = accessCount(u.email); const nameCell = `${u.name||''} <span class="tag" style="border-color:rgba(217,179,0,.35); color:#ffd700">${accesses}</span>`; tr.innerHTML = `<td>${u.email}</td><td>${nameCell}</td><td>${roleTag}</td><td>${dashes}</td><td class="col-actions"><button class="btn btn-secondary" data-act="view" data-email="${u.email}">Ver</button> <button class="btn btn-secondary" data-act="edit" data-email="${u.email}">Editar</button> <button class="btn btn-danger" data-act="del" data-email="${u.email}">Excluir</button></td>`; el.tblUsersBody.appendChild(tr); } }
+function clearUserForm(){ el.formUser.reset(); renderDashChecks(['default']); el.uEmail.readOnly=false; el.btnDeleteUser.classList.add('hide'); el.adminMsg.innerHTML=''; }
+function editUser(email){ const users=loadUsers(); const u=users.find(x=>x.email.toLowerCase()===email.toLowerCase()); if(!u) return; el.uEmail.value=u.email; el.uEmail.readOnly=true; el.uName.value=u.name||''; el.uRole.value=u.role||'user'; renderDashChecks(u.allowedDashIds||['default']); el.uPassword.value=''; el.btnDeleteUser.classList.remove('hide'); el.adminMsg.innerHTML = `<div class="success">Editando: ${u.email}</div>`; }
+function dashboardsFromActions(actions){ const ids=[...new Set(actions.filter(a=>a.type==='view').map(a=>a.dashId))]; return ids.map(id=>{ const d=CONFIG.dashboards.find(x=>x.id===id); return d?d.name:id; }).join(', ') || '—'; }
+function openAccessPanel(email){ const logs=loadLogs().filter(l=>l.email.toLowerCase()===email.toLowerCase()).sort((a,b)=>new Date(b.loginAt)-new Date(a.loginAt)); el.accessHint.classList.add('hide'); el.accessDetails.classList.remove('hide'); el.accUserEmail.textContent=email; el.tblAccessesBody.innerHTML=''; let totalMs=0; for(const l of logs){ const start=new Date(l.loginAt); const end=l.logoutAt?new Date(l.logoutAt):new Date(); const dur=end-start; totalMs+=Math.max(0,dur); const tr=document.createElement('tr'); tr.innerHTML = `<td>${fmtDateTime(l.loginAt)}</td><td>${l.logoutAt?fmtDateTime(l.logoutAt):'<span class="muted">—</span>'}</td><td>${fmtDuration(dur)}</td><td>${dashboardsFromActions(l.actions)}</td>`; el.tblAccessesBody.appendChild(tr); } const total=fmtDuration(totalMs); el.accUserSummary.innerHTML = `Sessões: <code class="inline">${logs.length}</code> • Tempo total: <code class="inline">${total}</code>`; el.btnClearLogs.onclick=()=>{ if(!confirm(`Limpar TODOS os logs de ${email}?`)) return; const rest=loadLogs().filter(l=>l.email.toLowerCase()!==email.toLowerCase()); saveLogs(rest); openAccessPanel(email); renderUserTable(); };
+}
+function renderAdmin(){ renderDashChecks(['default']); renderUserTable(); clearUserForm(); el.accessHint.classList.remove('hide'); el.accessDetails.classList.add('hide'); el.accUserEmail.textContent=''; el.accUserSummary.textContent=''; el.tblAccessesBody.innerHTML=''; }
+
+document.querySelector('#tblUsers').addEventListener('click', async (e)=>{ const btn=e.target.closest('button'); if(!btn) return; const email=btn.getAttribute('data-email'); const act=btn.getAttribute('data-act'); if(act==='view'){ openAccessPanel(email); return; } if(act==='edit'){ editUser(email); return; } if(act==='del'){ if(email.toLowerCase()===session.user?.email.toLowerCase()){ el.adminMsg.innerHTML = `<div class="error">Você não pode excluir seu próprio usuário logado.</div>`; return; } if(confirm(`Excluir usuário ${email}?`)){ deleteUser(email); renderUserTable(); el.adminMsg.innerHTML = `<div class="success">Usuário excluído.</div>`; clearUserForm(); } } });
+
+el.formUser.addEventListener('submit', async (e)=>{ e.preventDefault(); const email=el.uEmail.value.trim(); const name=el.uName.value.trim(); const role=el.uRole.value; const allowedDashIds=getSelectedDashIds(); const password=el.uPassword.value; try{ if(!emailRegex.test(email)) throw new Error('E-mail inválido.'); if(!name) throw new Error('Informe o nome.'); if(el.uEmail.readOnly){ await updateUser(email,{name,role,allowedDashIds,password: password||undefined}); el.adminMsg.innerHTML = `<div class="success">Usuário atualizado.</div>`; } else { if(!password) throw new Error('Defina uma senha para o novo usuário.'); await createUser({email,password,name,role,allowedDashIds}); el.adminMsg.innerHTML = `<div class="success">Usuário criado.</div>`; } renderUserTable(); clearUserForm(); } catch(err){ el.adminMsg.innerHTML = `<div class="error">${err.message||err}</div>`; } });
+
+el.btnClearUser.addEventListener('click', clearUserForm);
+el.btnDeleteUser.addEventListener('click', ()=>{ const email=el.uEmail.value.trim(); if(!email) return; if (email.toLowerCase()===session.user?.email.toLowerCase()) { el.adminMsg.innerHTML = `<div class="error">Você não pode excluir seu próprio usuário logado.</div>`; return; } if (confirm(`Excluir usuário ${email}?`)){ deleteUser(email); renderUserTable(); clearUserForm(); el.adminMsg.innerHTML = `<div class="success">Usuário excluído.</div>`; } });
+
+// Exportar / Importar
+el.btnExportUsers.addEventListener('click', ()=>{ const data=loadUsers(); const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='usuarios_pbi.json'; a.click(); URL.revokeObjectURL(a.href); });
+
+el.fileImport.addEventListener('change', async (e)=>{ const file=e.target.files?.[0]; if(!file) return; try{ const text=await file.text(); const json=JSON.parse(text); if(!Array.isArray(json)) throw new Error('Arquivo inválido.'); const ok=json.every(u=>u.email && u.passwordHash && Array.isArray(u.allowedDashIds)); if(!ok) throw new Error('Estrutura inválida (email, passwordHash, allowedDashIds).'); saveUsers(json); renderUserTable(); el.adminMsg.innerHTML = `<div class="success">Usuários importados.</div>`; }catch(err){ el.adminMsg.innerHTML = `<div class="error">Falha ao importar: ${err.message||err}</div>`; } finally{ e.target.value=''; } });
+
+/********************** SETUP INICIAL *************************/
+el.formSetup.addEventListener('submit', async (e)=>{ e.preventDefault(); const email=el.sEmail.value.trim(); const name=el.sNome.value.trim(); const pwd=el.sSenha.value; try{ if(!emailRegex.test(email)) throw new Error('E-mail inválido.'); if(!name) throw new Error('Informe o nome.'); if(!strongPwd.test(pwd)) throw new Error('Senha fraca.'); await createUser({email, password:pwd, name, role:'admin', allowedDashIds: CONFIG.dashboards.map(d=>d.id)}); el.setupMsg.innerHTML = `<div class="success">Administrador criado. Você já pode fazer login.</div>`; setTimeout(()=>{ showLogin(); }, 800); } catch(err){ el.setupMsg.innerHTML = `<div class="error">${err.message||err}</div>`; } });
+
+/********************** INICIALIZAÇÃO *************************/
+document.addEventListener('DOMContentLoaded', ()=>{ const hasUsers=loadUsers().length>0; if(hasUsers) showLogin(); else showSetup(); setTimeout(()=>{ if(!el.scrSetup.classList.contains('hide')) el.sEmail.focus(); else el.inputEmail.focus(); }, 300); });
+
+// Atalhos
+document.addEventListener('keydown', (e)=>{ if (e.key==='Escape'){ if(!el.scrDash.classList.contains('hide')) el.btnBack.click(); if(!el.scrAdmin.classList.contains('hide')) showDash(); } if (e.key==='F5' && !el.scrDash.classList.contains('hide')) { e.preventDefault(); el.btnReload.click(); } });
+
+// Navegação do Admin -> Voltar
+$('btnAdminBack').addEventListener('click', ()=> showDash());
+
+console.log('🔐 App responsivo pronto — Botão dourado dinâmico de Solicitar Atualização por dashboard.');
+</script>
+</body>
+</html>
